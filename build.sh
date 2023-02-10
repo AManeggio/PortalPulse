@@ -17,5 +17,5 @@ if ! test -f "$FILE"; then
     cp ./cimgui.so ../../build/cimgui.so
     cd ../..
 fi
-
-nim c -d:ssl -d:release -o:./build/pp ./gui.nim
+cd build
+nim c -d:ssl --run -o:./pp ../gui.nim

@@ -3,6 +3,16 @@ import spplib
 import nimgl/imgui, nimgl/imgui/[impl_opengl, impl_glfw]
 import nimgl/[opengl, glfw]
 
+proc loadStyles() = 
+  case Settings.style:
+    of "Cherry":
+      igStyleColorsCherry()
+    of "Light":
+      igStyleColorsLight()
+    of "Dark":
+      igStyleColorsDark()
+    of "Classic":
+      igStyleColorsClassic()
 
 proc main() =
   doAssert glfwInit()
@@ -13,7 +23,7 @@ proc main() =
   glfwWindowHint(GLFWOpenglProfile, GLFW_OPENGL_CORE_PROFILE)
   glfwWindowHint(GLFWResizable, GLFW_FALSE)
 
-  var w: GLFWWindow = glfwCreateWindow(800, 325, "Portal Pulse Mod Loader")
+  var w: GLFWWindow = glfwCreateWindow(800, 340, "Portal Pulse Mod Loader")
   if w == nil:
     quit(-1)
 
@@ -32,15 +42,16 @@ proc main() =
 
   var listptr: int = 1
   var currentlyLoaded: int = 3
-
+  var doSettings: bool = false
   while not w.windowShouldClose:
+    loadStyles()
     glfwPollEvents()
 
     igOpenGL3NewFrame()
     igGlfwNewFrame()
     igNewFrame()
     igGetIO().iniFilename = nil
-    igSetNextWindowSizeConstraints(ImVec2(x:800,y:325), ImVec2(x:1920, y:325))
+    igSetNextWindowSizeConstraints(ImVec2(x:800,y:340), ImVec2(x:1920, y:340))
     igSetNextWindowPos(ImVec2(x:0, y:0));
     #igSetNextWindowSize(igGetIO().displaySize)
     # Simple window
@@ -76,8 +87,35 @@ proc main() =
       if igIsItemHovered():
         igSetTooltip("Unload And Uninstall Mod")
 
+    if igButton("Settings"):
+      doSettings = true
+
     igEnd()
-    # End simple window
+    if doSettings:
+      igSetNextWindowSize(ImVec2(x: 200, y: 100))
+      igBegin("Settings")
+
+
+      if(igBeginCombo("Style", Settings.style)):
+        if igSelectable("Dark"):
+          Settings.style = "Dark"
+        if igSelectable("Light"):
+          Settings.style = "Light"
+        if igSelectable("Cherry"):
+          Settings.style = "Cherry"
+        if igSelectable("Classic"):
+          Settings.style = "Classic"
+        igEndCombo()
+      
+      igCheckbox("Launch Game After Install", Settings.doLaunch.addr)
+
+      if igButton("Save"):
+        Settings.save()
+      igSameLine()
+      if igButton("Close"):
+        load(Settings.addr)
+        doSettings = false
+      igEnd()
 
     igRender()
 

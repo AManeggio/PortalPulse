@@ -4,7 +4,6 @@ import std/httpclient
 import std/strutils
 import zip/zipfiles
 
-
 type Sppackage* = object
     title*: string
     name*: string
@@ -12,12 +11,32 @@ type Sppackage* = object
     icon*: string
     description*: string
 
+type SettingsObj* = object
+  style*: string
+  doLaunch*: bool
+  repo*: string
 
-var REPO* = "95.217.182.22"
+
+proc load*(self: ptr SettingsObj) = 
+  if existsFile("./config.json"):
+    var json = parseJson(readFile("./config.json"))
+    self.style = json["style"].str
+    self.doLaunch = json["dolaunch"].getBool()
+    self.repo = json["repo"].str
+  else:
+    writeFile("./config.json", "{\n\t\"style\": \"Cherry\",\n\t\"dolaunch\": true,\n\t\"repo\": \"95.217.182.22\"\n}")
+    load(self)
+
+proc save*(self: SettingsObj) = 
+  writeFile("./config.json", "{\n\t\"style\": \"$#\",\n\t\"dolaunch\": $#,\n\t\"repo\": \"$#\"\n}" % [self.style, $self.doLaunch, self.repo])
+    
+
+var Settings*: SettingsObj = SettingsObj()
+load(Settings.addr)
 var Client* = newHttpClient()
 var Packages* = newSeq[Sppackage]()
 var GamePath* = ""
-var PackagesJSON* = parseJson(Client.getContent("https://" & REPO & "/spplice/packages"))
+var PackagesJSON* = parseJson(Client.getContent("https://" & Settings.repo & "/spplice/packages"))
 
 
 proc unloadMod*(path: string) = 
@@ -29,7 +48,7 @@ proc installMod*(self: Sppackage, path: string) =
     unloadMod(path)
     Client = newHttpClient()
     echo "Installing Mod: " & self.title & " In: " & path & "/portal2_tempcontent"
-    var url = "https://$#/spplice/packages/$#/$#" % [REPO, self.name, self.file]
+    var url = "https://$#/spplice/packages/$#/$#" % [Settings.repo, self.name, self.file]
     echo url
     var fullPath = path & "/portal2_tempcontent"
     if not dirExists(fullPath):
